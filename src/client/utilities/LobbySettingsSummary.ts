@@ -122,6 +122,21 @@ export function notableLobbySettings(
       label: translateText("game_settings.water_nukes"),
       value: enabled,
     });
+  if (c.fogOfWar)
+    items.push({
+      label: translateText("game_settings.fog_of_war"),
+      value: enabled,
+    });
+  if (c.supplyLines)
+    items.push({
+      label: translateText("game_settings.supply_lines"),
+      value: enabled,
+    });
+  if (c.fairStart)
+    items.push({
+      label: translateText("game_settings.fair_start"),
+      value: enabled,
+    });
   if (c.doomsdayClock?.enabled)
     items.push({
       label: translateText("game_settings.doomsday_clock"),

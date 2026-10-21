@@ -40,6 +40,8 @@ export interface AttackLogicInput {
   falloutRatio: number | null;
   /** Tiles on the attack front this tick (plus jitter); fixed for the tick. */
   borderSize: number;
+  /** Supply lines: no City of the attacker's within supply range. */
+  outOfSupply?: boolean;
 }
 
 export interface AttackLogicResult {
@@ -561,6 +563,12 @@ export class EngineConfig extends Config {
       };
     }
 
+    if (input.outOfSupply) {
+      // Fighting far from home: troops die faster and the push is slower.
+      mag *= 2;
+      tileCost *= 1.5;
+    }
+
     if (defender.isDisconnectedTeammate) {
       // No troop loss if defender is disconnected and on same team
       mag = 0;
@@ -661,7 +669,7 @@ export class EngineConfig extends Config {
     if (playerInfo.playerType === PlayerType.Bot) {
       return 10_000;
     }
-    if (playerInfo.playerType === PlayerType.Nation) {
+    if (playerInfo.playerType === PlayerType.Nation && !this.fairStart()) {
       switch (this._gameConfig.difficulty) {
         case Difficulty.Easy:
           return 12_500;

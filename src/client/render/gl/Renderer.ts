@@ -1135,6 +1135,10 @@ export class GPURenderer {
     );
   }
 
+  setVision(isVisible: ((tile: number) => boolean) | null): void {
+    this.unitPass.setVision(isVisible);
+  }
+
   setLocalPlayerID(id: number): void {
     if (id === this.localPlayerID) return;
     this.localPlayerID = id;

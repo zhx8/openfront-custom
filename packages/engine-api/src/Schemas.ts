@@ -308,6 +308,12 @@ export const GameConfigSchema = z.object({
   // that only know publicIds at create_game); resolved to clientID at lookup.
   nameRevealPublicIds: z.string().array().max(200).optional(),
   waterNukes: z.boolean().nullable().optional(),
+  // Enemy ships and planes are hidden unless near your land or units.
+  fogOfWar: z.boolean().nullable().optional(),
+  // Attacking enemy land far from your Cities costs double troops.
+  supplyLines: z.boolean().nullable().optional(),
+  // Random spawns and equal starting troops/growth for humans and nations.
+  fairStart: z.boolean().nullable().optional(),
   randomSpawn: z.boolean(),
   maxPlayers: zb.uint().optional(),
   // OFM: allowlist of publicIds allowed to join (admin-only, see create_game).

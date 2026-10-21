@@ -87,6 +87,9 @@ export class HostLobbyModal extends BaseModal {
   @state() private startDelayValue: number | undefined = 3;
   @state() private instantBuild: boolean = false;
   @state() private randomSpawn: boolean = false;
+  @state() private fogOfWar: boolean = false;
+  @state() private supplyLines: boolean = false;
+  @state() private fairStart: boolean = false;
   @state() private compactMap: boolean = false;
   @state() private goldMultiplier: boolean = false;
   @state() private goldMultiplierValue: number | undefined = undefined;
@@ -707,6 +710,18 @@ export class HostLobbyModal extends BaseModal {
                     checked: this.waterNukes,
                   },
                   {
+                    labelKey: "game_settings.fog_of_war",
+                    checked: this.fogOfWar,
+                  },
+                  {
+                    labelKey: "game_settings.supply_lines",
+                    checked: this.supplyLines,
+                  },
+                  {
+                    labelKey: "game_settings.fair_start",
+                    checked: this.fairStart,
+                  },
+                  {
                     labelKey: "game_settings.doomsday_clock",
                     checked: this.doomsdayClock,
                     doomsdayClockSpeed: this.doomsdayClockSpeed,
@@ -1044,6 +1059,9 @@ export class HostLobbyModal extends BaseModal {
     this.whitelistEnabled = false;
     this.allowedPublicIds = "";
     this.waterNukes = false;
+    this.fogOfWar = false;
+    this.supplyLines = false;
+    this.fairStart = false;
     this.hostCheatsEnabled = false;
     this.hostCheatInfiniteGold = false;
     this.hostCheatInfiniteTroops = false;
@@ -1145,6 +1163,18 @@ export class HostLobbyModal extends BaseModal {
         break;
       case "game_settings.water_nukes":
         this.waterNukes = checked;
+        this.putGameConfig();
+        break;
+      case "game_settings.fog_of_war":
+        this.fogOfWar = checked;
+        this.putGameConfig();
+        break;
+      case "game_settings.supply_lines":
+        this.supplyLines = checked;
+        this.putGameConfig();
+        break;
+      case "game_settings.fair_start":
+        this.fairStart = checked;
         this.putGameConfig();
         break;
       case "game_settings.doomsday_clock":
@@ -1696,6 +1726,9 @@ export class HostLobbyModal extends BaseModal {
               ? (this.parseAllowedPublicIds() ?? [])
               : [],
             waterNukes: this.waterNukes ? true : null,
+            fogOfWar: this.fogOfWar ? true : null,
+            supplyLines: this.supplyLines ? true : null,
+            fairStart: this.fairStart ? true : null,
             hostCheats: this.hostCheatsEnabled
               ? {
                   infiniteGold: this.hostCheatInfiniteGold || undefined,

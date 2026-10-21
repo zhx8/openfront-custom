@@ -240,11 +240,7 @@ export function socialRouter(store: SocialStore): express.Router {
   );
 
   // From this server's own game workers (they share API_KEY).
-  const requireInternal = (
-    req: Request,
-    res: Response,
-    next: NextFunction,
-  ) => {
+  const requireInternal = (req: Request, res: Response, next: NextFunction) => {
     const key = process.env.API_KEY ?? "";
     const given = req.header(INTERNAL_KEY_HEADER) ?? "";
     if (

@@ -32,6 +32,8 @@ describe("archive retries", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.stubEnv("DOMAIN", "openfront.io");
+    // Records only go to OpenFront's API when it is in use.
+    vi.stubEnv("EXTERNAL_API", "true");
     vi.spyOn(GameRecordSchema, "safeParse").mockReturnValue({
       success: true,
       data: record,

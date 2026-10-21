@@ -6,9 +6,9 @@
 // own when a client stops reporting.
 
 import crypto from "crypto";
-import type { GameResult } from "./GameResults";
 import fs from "fs";
 import path from "path";
+import type { GameResult } from "./GameResults";
 
 export const USERNAME_REGEX = /^[A-Za-z0-9_]{3,16}$/;
 export const PASSWORD_MIN = 6;
@@ -85,13 +85,20 @@ const MAX_COUNTED_KEPT = 5000;
  * players, `winners` of whom won. Beating more people is worth more; a game
  * the AI won costs everyone a little.
  */
-export function ratingDelta(won: boolean, humans: number, winners: number): number {
+export function ratingDelta(
+  won: boolean,
+  humans: number,
+  winners: number,
+): number {
   if (winners === 0) return -5;
   if (won) {
     const beaten = humans - winners;
     return Math.min(60, Math.round(10 + (20 * beaten) / winners));
   }
-  return -Math.min(25, Math.round(5 + (10 * winners) / Math.max(1, humans - winners)));
+  return -Math.min(
+    25,
+    Math.round(5 + (10 * winners) / Math.max(1, humans - winners)),
+  );
 }
 
 export interface FriendView extends PublicUser {

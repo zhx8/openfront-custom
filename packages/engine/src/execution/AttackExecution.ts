@@ -397,6 +397,15 @@ export class AttackExecution implements Execution {
         ? this.mg.numTilesWithFallout() / this.mg.numLandTiles()
         : null,
       borderSize,
+      outOfSupply:
+        defender !== null &&
+        this.mg.config().supplyLines() &&
+        !this.mg.hasUnitNearby(
+          tile,
+          this.mg.config().supplyRange(),
+          UnitType.City,
+          this._owner.id(),
+        ),
     };
   }
 

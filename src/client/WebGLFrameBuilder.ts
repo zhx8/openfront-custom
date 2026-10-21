@@ -12,6 +12,7 @@ import { colord } from "colord";
 import { getCachedCosmetics } from "./Cosmetics";
 import { buildTerrainRowSpans } from "./render/frame/derive/TerrainRowSpans";
 import { uploadFrameData } from "./render/frame/Upload";
+import { VisionTracker } from "./render/frame/Vision";
 // Type-only: a value import would pull GPURenderer and its `.glsl?raw` shader
 // imports into any non-Vite consumer (e.g. the Node perf harness).
 import type { MapRenderer, PlayerStatic, SpawnCenter } from "./render/gl";
@@ -242,8 +243,42 @@ export class WebGLFrameBuilder {
     this.syncTerrainDeltas(gameView);
     this.syncNukeImpacts(gameView);
     this.resolveDeadUnitExplosions(gameView);
+    this.syncVision(gameView);
     uploadFrameData(this.view, gameView.frameData());
   }
+
+  private vision: VisionTracker | null = null;
+
+  // Fog of war: recompute what the local player can see this tick. Off for
+  // spectators and games without the option.
+  private syncVision(gameView: GameView): void {
+    const me = gameView.myPlayer();
+    if (!gameView.config().fogOfWar() || me === null || !me.isAlive()) {
+      if (this.vision !== null) {
+        this.vision = null;
+        this.visionPrimed = false;
+        this.view.setVision(null);
+      }
+      return;
+    }
+    const frame = gameView.frameData();
+    if (this.vision === null) {
+      this.vision = new VisionTracker(gameView.width(), gameView.height());
+      const vision = this.vision;
+      this.view.setVision((tile) => vision.isVisible(tile));
+    }
+    const unitTiles: number[] = [];
+    for (const u of me.units()) unitTiles.push(u.tile());
+    this.vision.update(
+      frame.tileState,
+      this.visionPrimed ? frame.changedTiles : null,
+      me.smallID(),
+      unitTiles,
+    );
+    this.visionPrimed = true;
+  }
+
+  private visionPrimed = false;
 
   /**
    * Attach the firing player's resolved nuke-explosion cosmetic to each dead

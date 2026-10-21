@@ -254,7 +254,21 @@ export class Config {
     );
   }
   isRandomSpawn(): boolean {
-    return this._gameConfig.randomSpawn;
+    return this._gameConfig.randomSpawn || this.fairStart();
+  }
+  fogOfWar(): boolean {
+    return this._gameConfig.fogOfWar ?? false;
+  }
+  supplyLines(): boolean {
+    return this._gameConfig.supplyLines ?? false;
+  }
+  fairStart(): boolean {
+    return this._gameConfig.fairStart ?? false;
+  }
+  // Supply lines: how far (tiles) an attack may be from one of the attacker's
+  // Cities before it is out of supply.
+  supplyRange(): number {
+    return 120;
   }
   infiniteTroops(): boolean {
     return this._gameConfig.infiniteTroops;
@@ -457,7 +471,7 @@ export class Config {
       toAdd *= 0.5;
     }
 
-    if (player.type() === PlayerType.Nation) {
+    if (player.type() === PlayerType.Nation && !this.fairStart()) {
       switch (this._gameConfig.difficulty) {
         case Difficulty.Easy:
           toAdd *= 0.9;

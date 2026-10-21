@@ -310,7 +310,8 @@ export class SocialPanel extends LitElement {
                   >${m.map} · ${m.mode} · ${m.players}
                   ${translateText("social.players")}</span
                 >
-                <span class="${m.delta >= 0 ? "text-emerald-300" : "text-red-300"}"
+                <span
+                  class="${m.delta >= 0 ? "text-emerald-300" : "text-red-300"}"
                   >${m.delta >= 0 ? "+" : ""}${m.delta}</span
                 >
               </div>`,

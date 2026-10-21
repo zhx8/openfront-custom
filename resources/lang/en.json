@@ -189,6 +189,17 @@
     "until": "Banned until {date}."
   },
   "build_menu": {
+    "counter": {
+      "assault_ship": "Beats: boat walls, warship screens · Beaten by: several warships",
+      "atom_bomb": "Beaten by: SAM launchers",
+      "bomber": "Beats: buildings, SAM sites · Beaten by: fighters",
+      "defense_post": "Beats: land attacks · Beaten by: bombers, nukes",
+      "fighter": "Beats: bombers, paratroopers, fighters · Beaten by: more fighters",
+      "hydrogen_bomb": "Beaten by: SAM launchers",
+      "paratrooper": "Beats: front lines, sea gaps · Beaten by: fighters, fast counterattacks",
+      "sam_launcher": "Beats: nukes · Beaten by: bombers",
+      "warship": "Beats: boats, trade ships · Beaten by: assault ships in numbers"
+    },
     "desc": {
       "airfield": "Home base for your air force. Lets you build Fighters and launch Bombers and Paratroopers. Each level adds a launch slot and 2 Fighter slots.",
       "assault_ship": "Armored landing ship: carries 20% of your troops to an enemy shore and fires at enemy boats on the way. Survives several warship hits.",
@@ -207,6 +218,17 @@
       "warship": "Captures trade ships, destroys ships and boats"
     },
     "not_enough_money": "Not enough money",
+    "stats": {
+      "airfield": "Reloads in {reload}s · {fighters} fighters per level",
+      "assault_ship": "HP {hp} · gun range {range} · fires every {reload}s",
+      "bomber": "Blast radius {blast} · burns radius {burn} · kills {kill}% of troops",
+      "defense_post": "Defends radius {range}",
+      "fighter": "HP {hp} · patrol range {range} · {hits} hits to down a fighter",
+      "missile_silo": "Reloads in {reload}s per level",
+      "paratrooper": "Carries {share}% troops · landing zone radius {radius} · safe for {hold}s",
+      "sam_launcher": "Range {range} · reloads in {reload}s",
+      "warship": "HP {hp} · shoots boats and ships"
+    },
     "upgrade_amount": "x{amount}",
     "warship_shift_hint": "Hold Shift and drag to select multiple warships at once"
   },
@@ -1021,6 +1043,8 @@
     "custom_alliances": "Alliance Duration",
     "disable_units": "Disable Units",
     "doomsday_clock": "Doomsday Clock",
+    "fair_start": "Fair start",
+    "fog_of_war": "Fog of war",
     "gold_multiplier": "Gold multiplier",
     "infinite_gold": "Infinite gold",
     "infinite_troops": "Infinite troops",
@@ -1034,6 +1058,7 @@
     "start": "Start Game",
     "starting": "Starting…",
     "starting_gold": "Starting Gold (Millions)",
+    "supply_lines": "Supply lines",
     "water_nukes": "Water nukes"
   },
   "game_starting_modal": {

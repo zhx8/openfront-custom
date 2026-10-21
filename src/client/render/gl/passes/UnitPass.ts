@@ -243,6 +243,18 @@ const MISSILE_TYPES: ReadonlySet<string> = new Set([
   UT_MIRV_WARHEAD,
 ]);
 
+/** What fog of war hides when it is out of sight: ships and planes.
+ *  Buildings stay on the map, and incoming nukes are always shown. */
+const FOG_HIDDEN_TYPES: ReadonlySet<string> = new Set([
+  UT_TRANSPORT,
+  UT_TRADE_SHIP,
+  UT_WARSHIP,
+  UT_ASSAULT_SHIP,
+  UT_BOMBER,
+  UT_FIGHTER,
+  UT_PARATROOPER,
+]);
+
 /** Values per smoothing segment in the flat `smoothSegs` array:
  *  (instanceIdx, lastX, lastY, x, y). The push site and the read loop must
  *  agree on this width — it's the record size, not a tunable. */
@@ -294,6 +306,7 @@ function createUnitVao(
 // ---------------------------------------------------------------------------
 
 export class UnitPass {
+  private isVisible: ((tile: number) => boolean) | null = null;
   /** Last known facing per aircraft id, kept while it hovers in place. */
   private headings = new Map<number, number>();
   private gl: WebGL2RenderingContext;
@@ -575,6 +588,15 @@ export class UnitPass {
 
     for (const unit of units.values()) {
       if (!unit.isActive || unit.waitTicks > 0) continue;
+      if (
+        this.isVisible !== null &&
+        FOG_HIDDEN_TYPES.has(unit.unitType) &&
+        unit.ownerID !== this.localPlayerID &&
+        !this.friendlyOwners.has(unit.ownerID) &&
+        !this.isVisible(unit.pos)
+      ) {
+        continue;
+      }
 
       let atlasIdx = this.typeToAtlasCol.get(unit.unitType);
 
@@ -717,6 +739,14 @@ export class UnitPass {
   setAffiliationTex(tex: WebGLTexture): void {
     this.affiliationTex = tex;
   }
+  /**
+   * Fog of war: when set, enemy ships and planes outside the visible area
+   * are not drawn. Null turns the fog off.
+   */
+  setVision(isVisible: ((tile: number) => boolean) | null): void {
+    this.isVisible = isVisible;
+  }
+
   setLocalPlayer(id: number): void {
     this.localPlayerID = id;
   }

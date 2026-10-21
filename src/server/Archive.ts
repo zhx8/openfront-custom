@@ -44,8 +44,13 @@ export async function archive(gameRecord: GameRecord) {
       return;
     }
     // This server's own ratings (see social/SocialStore).
-    const result = resultFromRecord(parsed.data);
-    if (result !== null) void sendResultToMaster(result);
+    // Never lets a bad record stop the archive below.
+    try {
+      const result = resultFromRecord(parsed.data);
+      if (result !== null) void sendResultToMaster(result);
+    } catch {
+      // A record without the fields a result needs just isn't rated.
+    }
     // Without OpenFront's API there is nowhere else to send the record.
     if (!ServerEnv.externalApiEnabled()) return;
     url = `${ServerEnv.jwtIssuer()}/game/${gameID}`;

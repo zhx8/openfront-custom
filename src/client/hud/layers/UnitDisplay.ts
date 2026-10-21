@@ -295,6 +295,64 @@ export class UnitDisplay extends LitElement implements Controller {
     `;
   }
 
+  // The real numbers behind a unit, from the game's rules, for the tooltip.
+  private statsLine(type: UnitType): string | null {
+    const c = this.game.config();
+    const seconds = (ticks: number) => Math.round(ticks / 10);
+    switch (type) {
+      case UnitType.Warship:
+        return translateText("build_menu.stats.warship", {
+          hp: c.unitInfo(UnitType.Warship).maxHealth ?? 0,
+        });
+      case UnitType.AssaultShip:
+        return translateText("build_menu.stats.assault_ship", {
+          hp: c.unitInfo(UnitType.AssaultShip).maxHealth ?? 0,
+          range: c.assaultShipRange(),
+          reload: seconds(c.assaultShipReload()),
+        });
+      case UnitType.Fighter:
+        return translateText("build_menu.stats.fighter", {
+          hp: c.unitInfo(UnitType.Fighter).maxHealth ?? 0,
+          range: c.fighterDetectionRange(),
+          hits: Math.ceil(
+            (c.unitInfo(UnitType.Fighter).maxHealth ?? 1) / c.fighterDamage(),
+          ),
+        });
+      case UnitType.Bomber:
+        return translateText("build_menu.stats.bomber", {
+          blast: c.bomberBlastRadius(),
+          burn: c.bomberScorchRadius(),
+          kill: Math.round(c.bomberTroopKillRatio() * 100),
+        });
+      case UnitType.Paratrooper:
+        return translateText("build_menu.stats.paratrooper", {
+          share: Math.round(c.paratrooperTroopShare() * 100),
+          radius: c.paratrooperDropRadius(),
+          hold: seconds(c.paratrooperAirheadTicks()),
+        });
+      case UnitType.Airfield:
+        return translateText("build_menu.stats.airfield", {
+          reload: seconds(c.AirfieldCooldown()),
+          fighters: c.fightersPerAirfieldLevel(),
+        });
+      case UnitType.SAMLauncher:
+        return translateText("build_menu.stats.sam_launcher", {
+          range: c.samRange(1),
+          reload: seconds(c.SAMCooldown()),
+        });
+      case UnitType.MissileSilo:
+        return translateText("build_menu.stats.missile_silo", {
+          reload: seconds(c.SiloCooldown()),
+        });
+      case UnitType.DefensePost:
+        return translateText("build_menu.stats.defense_post", {
+          range: c.defensePostRange(),
+        });
+      default:
+        return null;
+    }
+  }
+
   private renderUnitItem(
     icon: string,
     number: number | null,
@@ -334,9 +392,24 @@ export class UnitDisplay extends LitElement implements Controller {
                     "unit_type." + structureKey,
                   )}${` [${displayHotkey}]`}
                 </div>
-                <div class="p-2">
+                <div class="p-2 max-w-64 whitespace-normal">
                   ${translateText("build_menu.desc." + structureKey)}
                 </div>
+                ${this.statsLine(unitType)
+                  ? html`<div
+                      class="px-2 pb-1 text-[11px] text-sky-200 font-mono"
+                    >
+                      ${this.statsLine(unitType)}
+                    </div>`
+                  : null}
+                ${translateText("build_menu.counter." + structureKey) !==
+                "build_menu.counter." + structureKey
+                  ? html`<div
+                      class="px-2 pb-1 text-[11px] text-amber-200 max-w-64 whitespace-normal"
+                    >
+                      ${translateText("build_menu.counter." + structureKey)}
+                    </div>`
+                  : null}
                 ${unitType === UnitType.Warship
                   ? html`<div
                       class="mt-1 px-2 py-1 text-[10px] text-cyan-300 border-t border-white/10"

@@ -6,6 +6,7 @@ import rateLimit from "express-rate-limit";
 import http from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { profanityMatcher } from "./Censor";
 import {
   applyCheckinState,
   CHECKIN_INTERVAL_MS,
@@ -27,11 +28,10 @@ import { setNoStoreHeaders } from "./NoStoreHeaders";
 import { startPolling } from "./PollingLoop";
 import { renderAppShell } from "./RenderHtml";
 import { ServerEnv } from "./ServerEnv";
-import { profanityMatcher } from "./Censor";
 import { socialRouter } from "./social/SocialRoutes";
-import { installWorkerProxy, proxyWorkersEnabled } from "./WorkerProxy";
 import { SocialStore } from "./social/SocialStore";
 import { applyStaticAssetCacheControl } from "./StaticAssetCache";
+import { installWorkerProxy, proxyWorkersEnabled } from "./WorkerProxy";
 
 const playlist = new MapPlaylist();
 let lobbyService: MasterLobbyService;
