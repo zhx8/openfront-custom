@@ -4,7 +4,6 @@ import {
   MAX_USERNAME_LENGTH,
 } from "@openfront/engine-api/Schemas";
 import { CloseCode, CloseReason } from "@openfront/shared/CloseCodes";
-import { GameEnv } from "@openfront/shared/configuration/Env";
 import { generateID, replacer } from "@openfront/shared/SharedUtil";
 import {
   ClientMessage,
@@ -182,7 +181,7 @@ export function registerListingRoute(opts: {
 
         // Dev has no subscription backend; skip the check so the feature is
         // testable locally (same precedent as Turnstile).
-        if (ServerEnv.env() !== GameEnv.Dev) {
+        if (ServerEnv.usesOpenFrontBackend()) {
           const userMe = await getUserMe(token);
           if (userMe.type === "error") {
             log.warn(
@@ -482,7 +481,7 @@ export async function startWorker() {
       auth.persistentId,
       // Dev has no payment backend; skip the charge so the feature is
       // testable locally (same precedent as the listing subscription check).
-      ServerEnv.env() === GameEnv.Dev
+      !ServerEnv.usesOpenFrontBackend()
         ? async () => ({ type: "success" })
         : () => payForLobbyQueue(token, game.id),
     );
@@ -683,7 +682,7 @@ export async function startWorker() {
         // API. Runs before the rejoin attempt so a pre-start identity
         // change on refresh is screened before it is applied.
         let verifySkipped = false;
-        if (ServerEnv.env() !== GameEnv.Dev) {
+        if (ServerEnv.usesOpenFrontBackend()) {
           const game = gm.game(clientMsg.gameID);
           const stored = game?.storedIdentity(persistentId) ?? null;
           const isReadmit = game?.wasAdmitted(persistentId) ?? false;

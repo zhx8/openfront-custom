@@ -5,7 +5,6 @@ import {
   UserMeResponseSchema,
 } from "@openfront/shared/ApiSchemas";
 import { CloseCode, CloseReason } from "@openfront/shared/CloseCodes";
-import { GameEnv } from "@openfront/shared/configuration/Env";
 import { PersistentIdSchema } from "@openfront/shared/WireSchemas";
 import { jwtVerify } from "jose";
 import { z } from "zod";
@@ -23,7 +22,9 @@ export async function verifyClientToken(
   token: string,
 ): Promise<TokenVerificationResult> {
   if (PersistentIdSchema.safeParse(token).success) {
-    if (ServerEnv.env() === GameEnv.Dev) {
+    // Without OpenFront's API there are no signed tokens: the browser's own
+    // persistent ID is the only identity, in dev and in this fork's hosting.
+    if (!ServerEnv.usesOpenFrontBackend()) {
       return { type: "success", persistentId: token, claims: null };
     } else {
       return {

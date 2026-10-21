@@ -199,9 +199,12 @@ describe("GameServer listing", () => {
   describe("app.post('/api/game/:id/listing') interleaving", () => {
     afterEach(() => {
       vi.restoreAllMocks();
+      vi.unstubAllEnvs();
     });
 
     it("rejects listing when lobby settings change to enable host cheats while getUserMe is pending", async () => {
+      // The subscription check only runs with OpenFront's backend in use.
+      vi.stubEnv("EXTERNAL_API", "true");
       let routeHandler!: (req: any, res: any) => Promise<any>;
       const mockApp = {
         post(path: string, handler: any) {

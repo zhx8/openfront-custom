@@ -173,6 +173,8 @@ describe("GameServer.joinClient — environment guards", () => {
 
     it("rejects the fourth connection from one IP", () => {
       vi.spyOn(ServerEnv, "env").mockReturnValue(GameEnv.Prod);
+      // The per-IP limit only applies with OpenFront's backend in use.
+      vi.stubEnv("EXTERNAL_API", "true");
       const game = makeGame({ config: { gameType: GameType.Public } });
       expect(game.joinClient(sameIp("a"))).toBe("joined");
       expect(game.joinClient(sameIp("b"))).toBe("joined");

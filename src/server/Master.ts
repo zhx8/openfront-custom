@@ -28,6 +28,7 @@ import { startPolling } from "./PollingLoop";
 import { renderAppShell } from "./RenderHtml";
 import { ServerEnv } from "./ServerEnv";
 import { socialRouter } from "./social/SocialRoutes";
+import { installWorkerProxy, proxyWorkersEnabled } from "./WorkerProxy";
 import { SocialStore } from "./social/SocialStore";
 import { applyStaticAssetCacheControl } from "./StaticAssetCache";
 
@@ -41,6 +42,10 @@ const log = logger.child({ comp: "m" });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Single-port hosting (Render, Fly.io...): reach the workers through this
+// server instead of nginx. Before the JSON parser so bodies stream through.
+if (proxyWorkersEnabled()) installWorkerProxy(app, server);
 
 app.use(express.json());
 
@@ -297,7 +302,8 @@ export async function startMaster() {
       `Restarted worker ${workerId} (New PID: ${newWorker.process.pid})`,
     );
   });
-  const PORT = 3000;
+  // Hosts like Render tell the app which port to use.
+  const PORT = Number(process.env.PORT ?? 3000);
   server.listen(PORT, () => {
     log.info(`Master HTTP server listening on port ${PORT}`);
   });

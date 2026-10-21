@@ -45,6 +45,12 @@ export class ServerEnv {
     if (flag !== undefined) return flag === "true";
     return ServerEnv.gameEnv !== GameEnv.Dev;
   }
+  // Whether checks that need OpenFront's API (signed tokens, join
+  // verification, payments, per-IP limits tuned for the public site) apply.
+  // Off in dev and whenever the external API is disabled.
+  static usesOpenFrontBackend(): boolean {
+    return ServerEnv.gameEnv !== GameEnv.Dev && ServerEnv.externalApiEnabled();
+  }
   static gameEnvName(): string {
     switch (ServerEnv.gameEnv) {
       case GameEnv.Dev:

@@ -670,6 +670,10 @@ export class GameServer {
     // inherently same-IP.
     if (
       this.deps.env() !== GameEnv.Dev &&
+      // Without OpenFront's backend this server is for a shared network
+      // (a LAN party, a home or club network), where many players share one
+      // address.
+      process.env.EXTERNAL_API === "true" &&
       this.gameConfig.gameType === GameType.Public &&
       this.clients
         .active()
