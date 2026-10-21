@@ -2,6 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import {
+  ratingDelta,
   SocialError,
   SocialStore,
   verifyPassword,
@@ -116,5 +117,39 @@ describe("SocialStore", () => {
     expect(() => s.login("dana", "password1")).toThrow("bad_credentials");
     expect(s.login("dana", "newpass99").user.username).toBe("dana");
     expect(s.listUsers().map((u) => u.username)).toEqual(["dana"]);
+  });
+
+  test("rating changes reward beating more players", () => {
+    expect(ratingDelta(true, 2, 1)).toBe(30);
+    expect(ratingDelta(true, 6, 1)).toBe(60);
+    expect(ratingDelta(false, 2, 1)).toBeLessThan(0);
+    expect(ratingDelta(false, 4, 0)).toBe(-5);
+  });
+
+  test("records a finished game once, for linked accounts only", () => {
+    const s = new SocialStore(null, clock);
+    const a = s.register("ann", "password").user;
+    const b = s.register("ben", "password").user;
+    s.linkPlayer(a.id, "pid-ann-0001");
+    s.linkPlayer(b.id, "pid-ben-0001");
+    const result = {
+      gameId: "abcDEF12",
+      map: "World",
+      mode: "Free For All",
+      players: [
+        { persistentId: "pid-ann-0001", username: "ann", won: true },
+        { persistentId: "pid-ben-0001", username: "ben", won: false },
+        { persistentId: "pid-guest-01", username: "guest", won: false },
+      ],
+    };
+    s.recordResult(result);
+    s.recordResult(result); // duplicate report is ignored
+    const ann = s.profile(a.id);
+    expect(ann.games).toBe(1);
+    expect(ann.wins).toBe(1);
+    expect(ann.rating).toBeGreaterThan(1000);
+    expect(ann.matches[0]).toMatchObject({ gameId: "abcDEF12", won: true });
+    expect(s.profile(b.id).rating).toBeLessThan(1000);
+    expect(s.leaderboard().map((e) => e.username)).toEqual(["ann", "ben"]);
   });
 });

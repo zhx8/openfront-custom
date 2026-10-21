@@ -2237,15 +2237,21 @@
     "have_account": "Already have an account? Log in",
     "hosted_by": "{name}'s game",
     "join": "Join",
+    "leaderboard": "Leaderboard",
     "login": "Log in",
     "logout": "Log out",
+    "loss": "LOSS",
     "need_account": "New here? Create an account",
     "no_friends": "No friends yet. Add someone by their username.",
     "no_games": "No open games right now. Create a lobby and it shows up here for everyone on this server.",
+    "no_ranks": "No rated games yet. Win a multiplayer game to get on the board.",
     "now_friends": "You and {name} are now friends.",
     "password": "Password",
     "pending": "Waiting for: {names}",
     "players": "players",
+    "ranks_login": "Log in (Friends tab) to get a rating. Multiplayer games with 2+ players count.",
+    "recent": "Recent games",
+    "record": "{wins} wins in {games} games",
     "register": "Create account",
     "register_hint": "3-16 letters, numbers or _. Password at least 6 characters. Don't reuse a password from another site.",
     "remove": "Remove friend",
@@ -2259,7 +2265,10 @@
     "status_online": "Online",
     "tab_friends": "Friends",
     "tab_games": "Open games",
-    "username": "Username"
+    "tab_ranks": "Ranks",
+    "username": "Username",
+    "win": "WIN",
+    "your_rating": "Your rating"
   },
   "spawn_timer": {
     "team_percent_tooltip": "{team}: {percent}"

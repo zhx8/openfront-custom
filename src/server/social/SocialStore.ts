@@ -6,6 +6,7 @@
 // own when a client stops reporting.
 
 import crypto from "crypto";
+import type { GameResult } from "./GameResults";
 import fs from "fs";
 import path from "path";
 
@@ -28,6 +29,9 @@ export interface PublicUser {
 interface UserRecord extends PublicUser {
   usernameLower: string;
   banned?: boolean;
+  rating?: number;
+  wins?: number;
+  games?: number;
   // scrypt$<salt hex>$<hash hex>
   passwordHash: string;
   createdAt: number;
@@ -46,6 +50,48 @@ interface Data {
   friendships: string[];
   // Pending requests, as "from|to".
   requests: string[];
+  // sha256(in-game persistent ID) -> account, so finished games can be
+  // credited to the account that played them.
+  links: Record<string, string>;
+  // Most recent matches per account, newest first.
+  matches: Record<string, MatchRecord[]>;
+  // Games already counted (bounded), so a result is never applied twice.
+  counted: string[];
+}
+
+export interface MatchRecord {
+  gameId: string;
+  at: number;
+  map: string;
+  mode: string;
+  players: number;
+  won: boolean;
+  delta: number;
+}
+
+export interface LeaderboardEntry {
+  username: string;
+  rating: number;
+  wins: number;
+  games: number;
+}
+
+export const START_RATING = 1000;
+const MAX_MATCHES_KEPT = 20;
+const MAX_COUNTED_KEPT = 5000;
+
+/**
+ * Rating change for one player of a finished game with `humans` human
+ * players, `winners` of whom won. Beating more people is worth more; a game
+ * the AI won costs everyone a little.
+ */
+export function ratingDelta(won: boolean, humans: number, winners: number): number {
+  if (winners === 0) return -5;
+  if (won) {
+    const beaten = humans - winners;
+    return Math.min(60, Math.round(10 + (20 * beaten) / winners));
+  }
+  return -Math.min(25, Math.round(5 + (10 * winners) / Math.max(1, humans - winners)));
 }
 
 export interface FriendView extends PublicUser {
@@ -82,7 +128,15 @@ export class SocialError extends Error {
 }
 
 function emptyData(): Data {
-  return { users: {}, sessions: {}, friendships: [], requests: [] };
+  return {
+    users: {},
+    sessions: {},
+    friendships: [],
+    requests: [],
+    links: {},
+    matches: {},
+    counted: [],
+  };
 }
 
 function pairKey(a: string, b: string): string {
@@ -231,6 +285,78 @@ export class SocialStore {
   private publicUser(id: string): PublicUser | null {
     const u = this.data.users[id];
     return u ? { id: u.id, username: u.username } : null;
+  }
+
+  // --- ratings ----------------------------------------------------------
+
+  linkPlayer(userId: string, persistentId: string): void {
+    const key = sha256(persistentId);
+    if (this.data.links[key] === userId) return;
+    this.data.links[key] = userId;
+    this.save();
+  }
+
+  recordResult(result: GameResult): void {
+    if (this.data.counted.includes(result.gameId)) return;
+    this.data.counted.push(result.gameId);
+    if (this.data.counted.length > MAX_COUNTED_KEPT) this.data.counted.shift();
+
+    const humans = result.players.length;
+    const winners = result.players.filter((p) => p.won).length;
+    for (const p of result.players) {
+      const userId = this.data.links[sha256(p.persistentId)];
+      const user = userId ? this.data.users[userId] : undefined;
+      if (!user) continue;
+      const delta = ratingDelta(p.won, humans, winners);
+      user.rating = Math.max(0, (user.rating ?? START_RATING) + delta);
+      user.games = (user.games ?? 0) + 1;
+      if (p.won) user.wins = (user.wins ?? 0) + 1;
+      const list = (this.data.matches[user.id] ??= []);
+      list.unshift({
+        gameId: result.gameId,
+        at: this.now(),
+        map: result.map,
+        mode: result.mode,
+        players: humans,
+        won: p.won,
+        delta,
+      });
+      list.length = Math.min(list.length, MAX_MATCHES_KEPT);
+    }
+    this.save();
+  }
+
+  leaderboard(limit = 50): LeaderboardEntry[] {
+    return Object.values(this.data.users)
+      .filter((u) => !u.banned && (u.games ?? 0) > 0)
+      .map((u) => ({
+        username: u.username,
+        rating: u.rating ?? START_RATING,
+        wins: u.wins ?? 0,
+        games: u.games ?? 0,
+      }))
+      .sort(
+        (a, b) =>
+          b.rating - a.rating ||
+          b.wins - a.wins ||
+          a.username.localeCompare(b.username),
+      )
+      .slice(0, limit);
+  }
+
+  profile(userId: string): {
+    rating: number;
+    wins: number;
+    games: number;
+    matches: MatchRecord[];
+  } {
+    const u = this.data.users[userId];
+    return {
+      rating: u?.rating ?? START_RATING,
+      wins: u?.wins ?? 0,
+      games: u?.games ?? 0,
+      matches: this.data.matches[userId] ?? [],
+    };
   }
 
   // --- admin ------------------------------------------------------------

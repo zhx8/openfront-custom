@@ -9,6 +9,7 @@ import z from "zod";
 import { registeredSite } from "./ClusterCheckin";
 import { logger } from "./Logger";
 import { ServerEnv } from "./ServerEnv";
+import { resultFromRecord, sendResultToMaster } from "./social/GameResults";
 
 const log = logger.child({ component: "Archive" });
 
@@ -42,6 +43,11 @@ export async function archive(gameRecord: GameRecord) {
       });
       return;
     }
+    // This server's own ratings (see social/SocialStore).
+    const result = resultFromRecord(parsed.data);
+    if (result !== null) void sendResultToMaster(result);
+    // Without OpenFront's API there is nowhere else to send the record.
+    if (!ServerEnv.externalApiEnabled()) return;
     url = `${ServerEnv.jwtIssuer()}/game/${gameID}`;
     request = {
       method: "POST",

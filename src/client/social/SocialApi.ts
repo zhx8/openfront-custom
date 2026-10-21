@@ -1,6 +1,7 @@
 // Client for this server's own accounts / friends / open-lobby service
 // (src/server/social). Same origin: /api is proxied to the master server.
 
+import { getPersistentID } from "../Auth";
 import type { PresencePayload } from "../DesktopPresence";
 
 const TOKEN_KEY = "socialToken";
@@ -148,6 +149,52 @@ export const acceptFriend = (id: string) =>
 export const removeFriend = (id: string) =>
   call("POST", "/friends/remove", { id });
 
+export interface LeaderboardEntry {
+  username: string;
+  rating: number;
+  wins: number;
+  games: number;
+}
+
+export interface MatchRecord {
+  gameId: string;
+  at: number;
+  map: string;
+  mode: string;
+  players: number;
+  won: boolean;
+  delta: number;
+}
+
+export interface Profile {
+  rating: number;
+  wins: number;
+  games: number;
+  matches: MatchRecord[];
+}
+
+export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
+  const r = await call<{ entries: LeaderboardEntry[] }>(
+    "GET",
+    "/leaderboard",
+    undefined,
+    false,
+  );
+  return r.entries;
+}
+
+export const fetchProfile = () => call<Profile>("GET", "/profile");
+
+// Ties this browser's in-game player ID to the account, so the server can
+// credit finished games to it. Cheap and idempotent: sent on every sign-in
+// and page load.
+function linkThisBrowser(): void {
+  if (!currentUser()) return;
+  void call("POST", "/link", { persistentId: getPersistentID() }).catch(
+    () => undefined,
+  );
+}
+
 export async function fetchOpenLobbies(): Promise<OpenLobby[]> {
   const r = await call<{ lobbies: OpenLobby[] }>(
     "GET",
@@ -212,4 +259,9 @@ export function reportPresence(payload: PresencePayload | null): void {
   heartbeat ??= setInterval(report, HEARTBEAT_MS);
 }
 
-window.addEventListener(SOCIAL_AUTH_EVENT, () => report());
+window.addEventListener(SOCIAL_AUTH_EVENT, () => {
+  report();
+  linkThisBrowser();
+});
+// Deferred: Auth and this module can import each other through presence.
+setTimeout(linkThisBrowser, 0);

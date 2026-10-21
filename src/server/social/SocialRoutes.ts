@@ -3,6 +3,7 @@ import crypto from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
+import { INTERNAL_KEY_HEADER } from "./GameResults";
 import {
   PASSWORD_MAX,
   PublicUser,
@@ -29,6 +30,21 @@ const LobbySchema = z.object({
   gameMode: z.string().max(32).nullable().optional(),
   playerCount: z.number().int().min(0).max(1000).nullable().optional(),
   maxPlayers: z.number().int().min(0).max(1000).nullable().optional(),
+});
+
+const GameResultSchema = z.object({
+  gameId: z.string().regex(GAME_ID_REGEX),
+  map: z.string().max(64),
+  mode: z.string().max(64),
+  players: z
+    .array(
+      z.object({
+        persistentId: z.string().min(1).max(64),
+        username: z.string().max(64),
+        won: z.boolean(),
+      }),
+    )
+    .max(200),
 });
 
 interface AuthedRequest extends Request {
@@ -195,6 +211,49 @@ export function socialRouter(store: SocialStore): express.Router {
     handle((req, res) => {
       const gameId = z.string().regex(GAME_ID_REGEX).parse(req.params.gameId);
       store.closeLobby(gameId);
+      res.json({ ok: true });
+    }),
+  );
+
+  // --- ratings ------------------------------------------------------------
+  router.post(
+    "/link",
+    requireUser,
+    handle((req, res) => {
+      const { persistentId } = z
+        .object({ persistentId: z.string().min(8).max(64) })
+        .parse(req.body);
+      store.linkPlayer(req.user!.id, persistentId);
+      res.json({ ok: true });
+    }),
+  );
+
+  router.get(
+    "/leaderboard",
+    handle((_req, res) => res.json({ entries: store.leaderboard() })),
+  );
+
+  router.get(
+    "/profile",
+    requireUser,
+    handle((req, res) => res.json(store.profile(req.user!.id))),
+  );
+
+  // From this server's own game workers (they share API_KEY).
+  router.post(
+    "/internal/result",
+    handle((req, res) => {
+      const key = process.env.API_KEY ?? "";
+      const given = req.header(INTERNAL_KEY_HEADER) ?? "";
+      if (
+        !key ||
+        given.length !== key.length ||
+        !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))
+      ) {
+        res.status(403).json({ error: "forbidden" });
+        return;
+      }
+      store.recordResult(GameResultSchema.parse(req.body));
       res.json({ ok: true });
     }),
   );

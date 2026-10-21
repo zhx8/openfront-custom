@@ -6,12 +6,16 @@ import {
   acceptFriend,
   currentUser,
   fetchFriends,
+  fetchLeaderboard,
   fetchOpenLobbies,
+  fetchProfile,
   Friend,
   FriendsView,
+  LeaderboardEntry,
   login,
   logout,
   OpenLobby,
+  Profile,
   register,
   removeFriend,
   requestFriend,
@@ -23,7 +27,7 @@ import {
 const POLL_OPEN_MS = 5_000;
 const POLL_CLOSED_MS = 20_000;
 
-type Tab = "games" | "friends";
+type Tab = "games" | "friends" | "ranks";
 
 /**
  * The social sidebar: this server's open lobbies (join with one click, no
@@ -37,6 +41,8 @@ export class SocialPanel extends LitElement {
   @state() private user: SocialUser | null = currentUser();
   @state() private view: FriendsView | null = null;
   @state() private lobbies: OpenLobby[] = [];
+  @state() private leaderboard: LeaderboardEntry[] = [];
+  @state() private profile: Profile | null = null;
   @state() private error: string | null = null;
   @state() private notice: string | null = null;
   @state() private busy = false;
@@ -65,7 +71,9 @@ export class SocialPanel extends LitElement {
   // Other UI (the play page's "Open games" button) opens a given tab.
   private onOpenRequest = (e: Event) => {
     const tab = (e as CustomEvent<Tab>).detail;
-    if (tab === "games" || tab === "friends") this.tab = tab;
+    if (tab === "games" || tab === "friends" || tab === "ranks") {
+      this.tab = tab;
+    }
     this.open = true;
     void this.refresh();
   };
@@ -81,6 +89,10 @@ export class SocialPanel extends LitElement {
     try {
       this.lobbies = await fetchOpenLobbies();
       if (this.user) this.view = await fetchFriends();
+      if (this.open && this.tab === "ranks") {
+        this.leaderboard = await fetchLeaderboard();
+        this.profile = this.user ? await fetchProfile() : null;
+      }
     } catch {
       // Offline for a moment; the next poll retries.
     }
@@ -187,6 +199,7 @@ export class SocialPanel extends LitElement {
       >
         <div class="flex border-b border-white/10 text-sm">
           ${this.renderTab("games", "social.tab_games", this.lobbies.length)}
+          ${this.renderTab("ranks", "social.tab_ranks", 0)}
           ${this.renderTab(
             "friends",
             "social.tab_friends",
@@ -208,7 +221,11 @@ export class SocialPanel extends LitElement {
                 ${this.notice}
               </div>`
             : nothing}
-          ${this.tab === "games" ? this.renderGames() : this.renderFriends()}
+          ${this.tab === "games"
+            ? this.renderGames()
+            : this.tab === "ranks"
+              ? this.renderRanks()
+              : this.renderFriends()}
         </div>
       </div>
     `;
@@ -224,10 +241,83 @@ export class SocialPanel extends LitElement {
         this.tab = tab;
         this.error = null;
         this.notice = null;
+        void this.refresh();
       }}
     >
       ${translateText(key)}${count > 0 ? ` (${count})` : ""}
     </button>`;
+  }
+
+  private renderRanks() {
+    const p = this.profile;
+    return html`
+      ${this.user && p
+        ? html`<div
+            class="flex items-center justify-between rounded-lg bg-white/5 border border-white/10 px-3 py-2"
+          >
+            <div>
+              <div class="text-xs text-white/50">
+                ${translateText("social.your_rating")}
+              </div>
+              <div class="text-2xl font-bold text-sky-300">${p.rating}</div>
+            </div>
+            <div class="text-right text-xs text-white/60">
+              ${translateText("social.record", {
+                wins: p.wins,
+                games: p.games,
+              })}
+            </div>
+          </div>`
+        : html`<p class="text-xs text-white/60">
+            ${translateText("social.ranks_login")}
+          </p>`}
+      <div class="flex flex-col gap-0.5">
+        <div class="text-xs uppercase tracking-wide text-white/50">
+          ${translateText("social.leaderboard")}
+        </div>
+        ${this.leaderboard.length === 0
+          ? html`<p class="text-sm text-white/60">
+              ${translateText("social.no_ranks")}
+            </p>`
+          : this.leaderboard.map(
+              (e, i) => html`<div
+                class="flex items-center gap-2 rounded px-2 py-0.5 text-sm ${e.username ===
+                this.user?.username
+                  ? "bg-sky-400/15"
+                  : ""}"
+              >
+                <span class="w-6 text-right text-white/40">${i + 1}</span>
+                <span class="flex-1 truncate">${e.username}</span>
+                <span class="text-xs text-white/50">${e.wins}/${e.games}</span>
+                <span class="w-12 text-right font-semibold">${e.rating}</span>
+              </div>`,
+            )}
+      </div>
+      ${p && p.matches.length > 0
+        ? html`<div class="flex flex-col gap-0.5">
+            <div class="text-xs uppercase tracking-wide text-white/50">
+              ${translateText("social.recent")}
+            </div>
+            ${p.matches.map(
+              (m) => html`<div class="flex items-center gap-2 text-xs">
+                <span
+                  class="w-10 font-bold ${m.won
+                    ? "text-emerald-300"
+                    : "text-red-300"}"
+                  >${translateText(m.won ? "social.win" : "social.loss")}</span
+                >
+                <span class="flex-1 truncate text-white/70"
+                  >${m.map} · ${m.mode} · ${m.players}
+                  ${translateText("social.players")}</span
+                >
+                <span class="${m.delta >= 0 ? "text-emerald-300" : "text-red-300"}"
+                  >${m.delta >= 0 ? "+" : ""}${m.delta}</span
+                >
+              </div>`,
+            )}
+          </div>`
+        : nothing}
+    `;
   }
 
   private renderGames() {
