@@ -8,10 +8,8 @@ import { html, LitElement, TemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import {
   DESKTOP_TUTORIAL_VIDEO_URL,
-  getGamesPlayed,
   getTranslatedPlayerTeamLabel,
   homeHref,
-  isInIframe,
   translateText,
   TUTORIAL_VIDEO_URL,
 } from "../../../client/Utils";
@@ -55,7 +53,6 @@ import {
   reconcileXp,
 } from "../../ProvisionalXpAtDeath";
 import { PlaySoundEffectEvent } from "../../sound/Sounds";
-import { steamSDK } from "../../SteamSDK";
 import { SendWinnerEvent } from "../../Transport";
 import { GameView } from "../../view";
 
@@ -429,25 +426,10 @@ export class WinModal extends LitElement implements Controller {
     </style>`;
   }
 
+  // Upstream showed promos here (a tutorial video, the Steam store, Discord,
+  // the cosmetics store); this fork has none.
   innerHtml() {
-    // The Steam desktop build has nothing to wishlist — fall through to the
-    // other promos so the box is never empty.
-    const canWishlist = !steamSDK.isOnSteam();
-
-    if (isInIframe()) {
-      return canWishlist ? this.steamWishlist() : this.discordDisplay();
-    }
-
-    if (!this.isWin && getGamesPlayed() < 3) {
-      return this.renderYoutubeTutorial();
-    }
-    if (this.rand < 0.25 && canWishlist) {
-      return this.steamWishlist();
-    } else if (this.rand < 0.5) {
-      return this.discordDisplay();
-    } else {
-      return this.renderPatternButton();
-    }
+    return html``;
   }
 
   renderYoutubeTutorial() {
