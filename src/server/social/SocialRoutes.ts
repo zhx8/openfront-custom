@@ -240,21 +240,41 @@ export function socialRouter(store: SocialStore): express.Router {
   );
 
   // From this server's own game workers (they share API_KEY).
+  const requireInternal = (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ) => {
+    const key = process.env.API_KEY ?? "";
+    const given = req.header(INTERNAL_KEY_HEADER) ?? "";
+    if (
+      !key ||
+      given.length !== key.length ||
+      !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))
+    ) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+    next();
+  };
+
   router.post(
     "/internal/result",
+    requireInternal,
     handle((req, res) => {
-      const key = process.env.API_KEY ?? "";
-      const given = req.header(INTERNAL_KEY_HEADER) ?? "";
-      if (
-        !key ||
-        given.length !== key.length ||
-        !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(key))
-      ) {
-        res.status(403).json({ error: "forbidden" });
-        return;
-      }
       store.recordResult(GameResultSchema.parse(req.body));
       res.json({ ok: true });
+    }),
+  );
+
+  router.post(
+    "/internal/identity",
+    requireInternal,
+    handle((req, res) => {
+      const { persistentId } = z
+        .object({ persistentId: z.string().min(1).max(64) })
+        .parse(req.body);
+      res.json({ identity: store.identityForPlayer(persistentId) });
     }),
   );
 

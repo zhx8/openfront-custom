@@ -296,6 +296,21 @@ export class SocialStore {
     this.save();
   }
 
+  /**
+   * The account behind an in-game player ID, as the game server's publicId,
+   * and the publicIds of that account's friends: the game groups friends on
+   * the same team.
+   */
+  identityForPlayer(
+    persistentId: string,
+  ): { publicId: string; friends: string[] } | null {
+    const userId = this.data.links[sha256(persistentId)];
+    if (!userId || !this.data.users[userId] || this.data.users[userId].banned) {
+      return null;
+    }
+    return { publicId: userId, friends: this.friendIds(userId) };
+  }
+
   recordResult(result: GameResult): void {
     if (this.data.counted.includes(result.gameId)) return;
     this.data.counted.push(result.gameId);
