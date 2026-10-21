@@ -152,18 +152,4 @@ describe("SocialStore", () => {
     expect(s.profile(b.id).rating).toBeLessThan(1000);
     expect(s.leaderboard().map((e) => e.username)).toEqual(["ann", "ben"]);
   });
-
-  test("game servers get a player's account and friends for team grouping", () => {
-    const s = new SocialStore(null, clock);
-    const a = s.register("ann", "password").user;
-    const b = s.register("ben", "password").user;
-    s.requestFriend(a.id, "ben");
-    s.accept(b.id, a.id);
-    s.linkPlayer(a.id, "pid-ann-0001");
-    expect(s.identityForPlayer("pid-ann-0001")).toEqual({
-      publicId: a.id,
-      friends: [b.id],
-    });
-    expect(s.identityForPlayer("pid-unknown-1")).toBeNull();
-  });
 });

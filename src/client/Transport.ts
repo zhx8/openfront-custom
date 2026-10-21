@@ -34,6 +34,7 @@ import {
   ClientReportMessage,
   ClientSendLiveStatsMessage,
   ClientSendWinnerMessage,
+  ClientChooseTeamMessage,
   ClientSpectateMessage,
   LiveStats,
   ReportReason,
@@ -53,6 +54,7 @@ import { isDesktopShell } from "./DesktopShell";
 import { showInGameConfirm } from "./InGameModal";
 import {
   SendKickPlayerIntentEvent,
+  SendChooseTeamEvent,
   SendSpectateEvent,
   SendToggleGameStartTimer,
   SendUpdateGameConfigIntentEvent,
@@ -365,6 +367,12 @@ export class Transport {
     this.subscribe(SendToggleGameStartTimer, (e) =>
       this.onSendToggleGameStartTimer(e),
     );
+    this.subscribe(SendChooseTeamEvent, (e) => {
+      this.sendMsg({
+        type: "choose_team",
+        teamIndex: e.teamIndex,
+      } satisfies ClientChooseTeamMessage);
+    });
     this.subscribe(SendSpectateEvent, (e) => {
       this.lobbyConfig.spectator = e.spectator;
       this.sendMsg({

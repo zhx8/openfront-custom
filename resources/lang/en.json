@@ -1316,6 +1316,7 @@
     "hard_nations": "Hard Nations",
     "host_badge": "Host",
     "host_cheats": "Host Cheats",
+    "join_team": "Join",
     "leave_confirmation": "Are you sure you want to leave the lobby?",
     "list_lobby_body": "Your lobby will appear in the public lobby list. It starts automatically when the timer runs out or the lobby fills up. Settings can't be changed once it's listed.",
     "list_lobby_confirm": "List lobby",

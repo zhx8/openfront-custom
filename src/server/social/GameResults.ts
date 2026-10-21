@@ -61,34 +61,3 @@ export async function sendResultToMaster(result: GameResult): Promise<void> {
     console.warn("could not send game result to the main server", err);
   }
 }
-
-/**
- * The account and friends behind an in-game player ID, from the main server,
- * or null for a guest (or if the main server can't be reached).
- */
-export async function fetchSocialIdentity(
-  persistentId: string,
-): Promise<{ publicId: string; friends: string[] } | null> {
-  const port = Number(process.env.PORT ?? 3000);
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:${port}/api/social/internal/identity`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          [INTERNAL_KEY_HEADER]: process.env.API_KEY ?? "",
-        },
-        body: JSON.stringify({ persistentId }),
-        signal: AbortSignal.timeout(3_000),
-      },
-    );
-    if (!res.ok) return null;
-    const body = (await res.json()) as {
-      identity: { publicId: string; friends: string[] } | null;
-    };
-    return body.identity;
-  } catch {
-    return null;
-  }
-}

@@ -21,3 +21,8 @@ export class SendToggleGameStartTimer implements GameEvent {
 export class SendSpectateEvent implements GameEvent {
   constructor(public readonly spectator: boolean) {}
 }
+
+/** Join a team in a team-mode lobby (null: let the game place me). */
+export class SendChooseTeamEvent implements GameEvent {
+  constructor(public readonly teamIndex: number | null) {}
+}

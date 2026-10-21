@@ -40,7 +40,8 @@ export type ClientMessage =
   | ClientLogMessage
   | ClientHashMessage
   | ClientSpectateMessage
-  | ClientReportMessage;
+  | ClientReportMessage
+  | ClientChooseTeamMessage;
 
 export type ServerMessage =
   | ServerTurnMessage
@@ -216,9 +217,9 @@ export const ClientInfoSchema = z.object({
   // Watching rather than playing. Listed like anyone else — a spectator sees the
   // lobby exactly as a player does — but not in the simulation.
   spectator: z.boolean().optional(),
-  // Server-pinned team slot for matchmade team games, so the lobby's team
-  // preview can honour the pins instead of re-deriving teams that the server
-  // will overrule at start. Absent when the game isn't matchmade.
+  // Server-pinned team slot: matchmade teams, or the team the player picked
+  // in the lobby, so the lobby's team preview can honour the pins instead of
+  // re-deriving teams that the server will overrule at start.
   teamIndex: zb.uint().optional(),
   // Signed-in players' level, for the badge next to their name: level,
   // prestige and legend packed into one varint by packLevelBadge
@@ -753,6 +754,16 @@ export const ClientSpectateMessageSchema = z.object({
   spectator: z.boolean(),
 });
 
+// Pick a team in a team-mode lobby (null: let the game place me). Lobby-phase
+// only; ignored in matchmade games, whose teams are fixed.
+export const ClientChooseTeamMessageSchema = z.object({
+  type: z.literal("choose_team"),
+  teamIndex: zb.uint({ max: 99 }).nullable(),
+});
+export type ClientChooseTeamMessage = z.infer<
+  typeof ClientChooseTeamMessageSchema
+>;
+
 export const ClientMessageSchema = zb.discriminatedUnion("type", [
   ClientSendWinnerSchema,
   ClientSendLiveStatsSchema,
@@ -764,6 +775,7 @@ export const ClientMessageSchema = zb.discriminatedUnion("type", [
   ClientHashSchema,
   ClientSpectateMessageSchema,
   ClientReportMessageSchema,
+  ClientChooseTeamMessageSchema,
 ]);
 
 //

@@ -263,17 +263,6 @@ export function socialRouter(store: SocialStore): express.Router {
     }),
   );
 
-  router.post(
-    "/internal/identity",
-    requireInternal,
-    handle((req, res) => {
-      const { persistentId } = z
-        .object({ persistentId: z.string().min(1).max(64) })
-        .parse(req.body);
-      res.json({ identity: store.identityForPlayer(persistentId) });
-    }),
-  );
-
   // --- admin: header "x-admin-key: <SOCIAL_ADMIN_KEY>" ---------------------
   const adminKey = process.env.SOCIAL_ADMIN_KEY;
   const requireAdmin = (req: Request, res: Response, next: NextFunction) => {

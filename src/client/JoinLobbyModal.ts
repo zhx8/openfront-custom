@@ -27,7 +27,7 @@ import { GameStartAlertController } from "./components/GameStartAlertController"
 import { inviteFriendsButton } from "./components/ui/InviteFriendsButton";
 import { DEFAULT_TITLE_CLASS, modalHeader } from "./components/ui/ModalHeader";
 import { gamePortal } from "./GamePortal";
-import { SendSpectateEvent } from "./LobbyEvents";
+import { SendChooseTeamEvent, SendSpectateEvent } from "./LobbyEvents";
 import { PublicLobbySocket } from "./LobbySocket";
 import { JoinLobbyEvent } from "./Main";
 import { openReplayViewer } from "./replay/ReplayEntry";
@@ -241,6 +241,10 @@ export class JoinLobbyModal extends BaseModal {
                 ${this.players.length > 0
                   ? html`
                       <lobby-player-view
+                        .onChooseTeam=${(teamIndex: number) =>
+                          this.eventBus?.emit(
+                            new SendChooseTeamEvent(teamIndex),
+                          )}
                         class="mt-6"
                         .gameMode=${this.gameConfig?.gameMode ?? GameMode.FFA}
                         .clients=${this.players}

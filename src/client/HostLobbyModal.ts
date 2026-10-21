@@ -29,22 +29,23 @@ import {
   translateText,
 } from "../client/Utils";
 import { createLobby, getUserMe, queueLobby, setLobbyListed } from "./Api";
-import "./components/baseComponents/Modal";
 import { BaseModal } from "./components/BaseModal";
-import "./components/ConfirmDialog";
+import "./components/baseComponents/Modal";
 import { CopyButton } from "./components/CopyButton";
+import "./components/ConfirmDialog";
+import { ListLobbyOptions } from "./components/ListLobbyDialog";
 import "./components/GameConfigSettings";
 import "./components/InputCard";
 import "./components/InsufficientCurrencyDialog";
 import "./components/ListLobbyDialog";
-import { ListLobbyOptions } from "./components/ListLobbyDialog";
+import { inviteFriendsButton } from "./components/ui/InviteFriendsButton";
 import "./components/LobbyPlayerView";
 import "./components/PlutoniumIcon";
 import "./components/ToggleInputCard";
-import { inviteFriendsButton } from "./components/ui/InviteFriendsButton";
 import { modalHeader } from "./components/ui/ModalHeader";
 import { fetchCosmetics, InsufficientCurrency } from "./Cosmetics";
 import { gamePortal } from "./GamePortal";
+import { SendChooseTeamEvent } from "./LobbyEvents";
 import { JoinLobbyEvent } from "./Main";
 import { terrainMapFileLoader } from "./TerrainMapFileLoader";
 import { UserSettings } from "./UserSettings";
@@ -776,6 +777,8 @@ export class HostLobbyModal extends BaseModal {
           ></game-config-settings>
 
           <lobby-player-view
+            .onChooseTeam=${(teamIndex: number) =>
+              this.eventBus?.emit(new SendChooseTeamEvent(teamIndex))}
             class="mt-10"
             .gameMode=${this.gameMode}
             .clients=${this.clients}

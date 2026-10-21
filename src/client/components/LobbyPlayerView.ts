@@ -50,6 +50,8 @@ function sameBadge(
 
 export interface TeamPreviewData {
   team: Team;
+  // Position in the game's team list: what a "join team" request names.
+  index?: number;
   players: ClientInfo[];
   clanTag?: string | null;
 }
@@ -65,6 +67,8 @@ export class LobbyTeamView extends LitElement {
   @property({ attribute: "team-count" }) teamCount: TeamCountConfig = 2;
   @property({ type: Function }) onKickPlayer?: (clientID: string) => void;
   @property({ type: Function }) onToggleNameReveal?: (clientID: string) => void;
+  /** Set when the viewer may pick their own team (team-mode lobbies). */
+  @property({ type: Function }) onChooseTeam?: (teamIndex: number) => void;
   @property({ type: Array }) nameReveals: string[] = [];
   @property({ type: Boolean }) anonymizeNames: boolean = false;
   @property({ type: Number }) nationCount: number = 0;
@@ -394,9 +398,23 @@ export class LobbyTeamView extends LitElement {
               : null}
             <span class="truncate">${teamLabel}</span>
           </div>
-          <span class="text-white/90 font-bold text-[13px] shrink-0"
-            >${displayCount}/${maxTeamSize}</span
-          >
+          <span class="flex items-center gap-1.5 shrink-0">
+            ${this.onChooseTeam &&
+            preview.index !== undefined &&
+            preview.team !== ColoredTeams.Nations &&
+            !this.teamContainsCurrentPlayer(preview) &&
+            displayCount < maxTeamSize
+              ? html`<button
+                  class="rounded bg-sky-500 hover:bg-sky-400 px-1.5 py-0.5 text-[11px] font-bold text-slate-900"
+                  @click=${() => this.onChooseTeam?.(preview.index!)}
+                >
+                  ${translateText("host_modal.join_team")}
+                </button>`
+              : null}
+            <span class="text-white/90 font-bold text-[13px]"
+              >${displayCount}/${maxTeamSize}</span
+            >
+          </span>
         </div>
         <div class="p-2 ${isEmpty ? "" : "flex flex-col gap-1.5"}">
           ${isEmpty
@@ -568,8 +586,9 @@ export class LobbyTeamView extends LitElement {
         ),
       );
     }
-    this.teamPreview = teams.map((t) => ({
+    this.teamPreview = teams.map((t, index) => ({
       team: t,
+      index,
       players: buckets.get(t) ?? [],
     }));
     this.triggerClanUpdate();

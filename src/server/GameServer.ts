@@ -339,7 +339,7 @@ export class GameServer {
       gameID: opts.id,
       config: () => this.gameConfig,
       clients: () => this.clients.all(),
-      teamIndex: (c) => this.matchmakingTeamIndex(c),
+      teamIndex: (c) => this.teamIndexFor(c),
     });
     this.log = opts.log.child({ gameID: opts.id });
     this.ingress = new SocketIngress(
@@ -862,6 +862,10 @@ export class GameServer {
         this.setSpectator(client, clientMsg.spectator);
         break;
       }
+      case "choose_team": {
+        this.chooseTeam(client, clientMsg.teamIndex);
+        break;
+      }
       case "winner": {
         this.handleWinner(client, clientMsg);
         break;
@@ -1180,7 +1184,7 @@ export class GameServer {
         cosmetics: c.cosmetics,
         isLobbyCreator: this.lobbyCreatorID === c.clientID,
         friends: friendsFor(c),
-        teamIndex: this.matchmakingTeamIndex(c),
+        teamIndex: this.teamIndexFor(c),
       })),
       tribes: this.tribes,
     });
@@ -1404,6 +1408,24 @@ export class GameServer {
     // The lobby list is derived from this flag, so everyone's view of who is
     // playing has to be refreshed rather than waiting out the next tick.
     this.broadcastLobbyInfo();
+  }
+
+  // Team slots picked by players in the lobby (index into the game's team
+  // list). Pinned at start like matchmade slots; an index past the game's
+  // team count is ignored there, so the player is simply placed as usual.
+  private chosenTeams = new Map<ClientID, number>();
+
+  private chooseTeam(client: Client, teamIndex: number | null): void {
+    if (this.hasStarted() || this.matchmakingTeams !== undefined) return;
+    if (client.spectator) return;
+    if (teamIndex === null) this.chosenTeams.delete(client.clientID);
+    else this.chosenTeams.set(client.clientID, teamIndex);
+    this.broadcastLobbyInfo();
+  }
+
+  // The team slot a client starts in: matchmade, else picked, else none.
+  private teamIndexFor(c: Client): number | undefined {
+    return this.matchmakingTeamIndex(c) ?? this.chosenTeams.get(c.clientID);
   }
 
   // Pin a publicId to a team slot after the lobby exists, so a lobby that fills

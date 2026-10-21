@@ -61,7 +61,6 @@ import { startRankedCheckinLoops } from "./RankedCheckin";
 import { rejoinOrClose } from "./Rejoin";
 import { ServerEnv } from "./ServerEnv";
 import { SingleplayerPresence } from "./SingleplayerPresence";
-import { fetchSocialIdentity } from "./social/GameResults";
 import { applyStaticAssetCacheControl } from "./StaticAssetCache";
 import { createMatchTelemetryEmitter } from "./telemetry/BufferedMatchTelemetryEmitter";
 import { MAX_WEBSOCKET_PAYLOAD_BYTES } from "./telemetry/MatchTelemetryConfig";
@@ -848,16 +847,6 @@ export async function startWorker() {
           });
         }
         const resolvedClanTag = resolution.tag;
-
-        // Without OpenFront's API, this server's own accounts supply the
-        // player's identity and friends (friends share a team in team games).
-        if (!ServerEnv.usesOpenFrontBackend() && publicId === undefined) {
-          const social = await fetchSocialIdentity(persistentId);
-          if (social !== null) {
-            publicId = social.publicId;
-            friends = social.friends;
-          }
-        }
 
         const cosmeticResult = privilegeRefresher
           .get()
