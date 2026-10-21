@@ -43,8 +43,10 @@ export class Footer extends LitElement {
           <div
             class="flex items-center justify-center gap-4 lg:gap-6 pt-2 w-full relative"
           >
+            <!-- This server's own source code (AGPL): /source redirects to
+                 the repo set in SOURCE_URL. -->
             <a
-              href="https://github.com/openfrontio/OpenFrontIO"
+              href="/source"
               target="_blank"
               rel="noopener noreferrer"
               class="opacity-60 hover:opacity-100 hover:scale-110 transition-all"

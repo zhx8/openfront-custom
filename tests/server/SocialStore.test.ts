@@ -96,4 +96,25 @@ describe("SocialStore", () => {
     now += 30_000;
     expect(s.openLobbies()).toHaveLength(0);
   });
+
+  test("rejects offensive usernames when a filter is given", () => {
+    const s = new SocialStore(null, clock, (n) => n.includes("bad"));
+    expect(() => s.register("badword", "password")).toThrow(
+      "inappropriate_username",
+    );
+    expect(s.register("goodname", "password").user.username).toBe("goodname");
+  });
+
+  test("admin can ban, unban and reset passwords", () => {
+    const s = new SocialStore(null, clock);
+    const { token } = s.register("dana", "password1");
+    s.setBanned("DANA", true);
+    expect(s.userForToken(token)).toBeNull();
+    expect(() => s.login("dana", "password1")).toThrow("banned");
+    s.setBanned("dana", false);
+    s.resetPassword("dana", "newpass99");
+    expect(() => s.login("dana", "password1")).toThrow("bad_credentials");
+    expect(s.login("dana", "newpass99").user.username).toBe("dana");
+    expect(s.listUsers().map((u) => u.username)).toEqual(["dana"]);
+  });
 });

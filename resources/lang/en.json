@@ -2221,9 +2221,11 @@
     "error": {
       "already_friends": "You're already friends.",
       "bad_credentials": "Wrong username or password.",
+      "banned": "This account has been banned.",
       "cannot_add_self": "You can't add yourself.",
       "generic": "Something went wrong. Try again.",
       "http_429": "Too many tries. Wait a minute.",
+      "inappropriate_username": "That username isn't allowed. Pick another.",
       "invalid_password": "Passwords must be 6-72 characters.",
       "invalid_username": "Usernames are 3-16 letters, numbers or _.",
       "network": "Can't reach the server.",

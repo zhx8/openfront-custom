@@ -27,6 +27,7 @@ export interface PublicUser {
 
 interface UserRecord extends PublicUser {
   usernameLower: string;
+  banned?: boolean;
   // scrypt$<salt hex>$<hash hex>
   passwordHash: string;
   createdAt: number;
@@ -122,6 +123,8 @@ export class SocialStore {
     // null keeps everything in memory (tests).
     private readonly file: string | null,
     private readonly now: () => number = Date.now,
+    // Rejects offensive usernames at sign-up.
+    private readonly isOffensive: (name: string) => boolean = () => false,
   ) {
     this.data = this.load();
   }
@@ -153,6 +156,9 @@ export class SocialStore {
     if (!USERNAME_REGEX.test(username)) {
       throw new SocialError(400, "invalid_username");
     }
+    if (this.isOffensive(username)) {
+      throw new SocialError(400, "inappropriate_username");
+    }
     if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
       throw new SocialError(400, "invalid_password");
     }
@@ -181,6 +187,7 @@ export class SocialStore {
     if (!user || !verifyPassword(password, user.passwordHash)) {
       throw new SocialError(401, "bad_credentials");
     }
+    if (user.banned) throw new SocialError(403, "banned");
     const token = this.newSession(user.id);
     this.save();
     return { token, user: { id: user.id, username: user.username } };
@@ -200,7 +207,9 @@ export class SocialStore {
       return null;
     }
     const user = this.data.users[session.userId];
-    return user ? { id: user.id, username: user.username } : null;
+    return user && !user.banned
+      ? { id: user.id, username: user.username }
+      : null;
   }
 
   private newSession(userId: string): string {
@@ -222,6 +231,51 @@ export class SocialStore {
   private publicUser(id: string): PublicUser | null {
     const u = this.data.users[id];
     return u ? { id: u.id, username: u.username } : null;
+  }
+
+  // --- admin ------------------------------------------------------------
+
+  private requireUser(username: string): UserRecord {
+    const user = this.findByUsername(username);
+    if (!user) throw new SocialError(404, "user_not_found");
+    return user;
+  }
+
+  private revokeSessions(userId: string): void {
+    for (const [key, session] of Object.entries(this.data.sessions)) {
+      if (session.userId === userId) delete this.data.sessions[key];
+    }
+  }
+
+  setBanned(username: string, banned: boolean): void {
+    const user = this.requireUser(username);
+    user.banned = banned;
+    if (banned) {
+      this.revokeSessions(user.id);
+      this.presence.delete(user.id);
+    }
+    this.save();
+  }
+
+  resetPassword(username: string, password: string): void {
+    if (password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+      throw new SocialError(400, "invalid_password");
+    }
+    const user = this.requireUser(username);
+    user.passwordHash = hashPassword(password);
+    this.revokeSessions(user.id);
+    this.save();
+  }
+
+  listUsers(): Array<PublicUser & { banned: boolean; createdAt: number }> {
+    return Object.values(this.data.users)
+      .map((u) => ({
+        id: u.id,
+        username: u.username,
+        banned: u.banned === true,
+        createdAt: u.createdAt,
+      }))
+      .sort((a, b) => a.username.localeCompare(b.username));
   }
 
   // --- friends ------------------------------------------------------------

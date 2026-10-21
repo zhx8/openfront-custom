@@ -27,6 +27,7 @@ import { setNoStoreHeaders } from "./NoStoreHeaders";
 import { startPolling } from "./PollingLoop";
 import { renderAppShell } from "./RenderHtml";
 import { ServerEnv } from "./ServerEnv";
+import { profanityMatcher } from "./Censor";
 import { socialRouter } from "./social/SocialRoutes";
 import { installWorkerProxy, proxyWorkersEnabled } from "./WorkerProxy";
 import { SocialStore } from "./social/SocialStore";
@@ -167,6 +168,8 @@ app.use(
     new SocialStore(
       process.env.SOCIAL_DATA_FILE ??
         path.join(process.cwd(), "data", "social.json"),
+      Date.now,
+      (name) => profanityMatcher.hasMatch(name),
     ),
   ),
 );
@@ -343,6 +346,14 @@ export async function startMaster() {
     }, MAP_WEIGHTS_POLL_MS);
   }
 }
+
+// The AGPL requires offering players this server's source code. Set
+// SOURCE_URL to your fork's repository.
+app.get("/source", (_req, res) => {
+  res.redirect(
+    process.env.SOURCE_URL ?? "https://github.com/openfrontio/OpenFrontIO",
+  );
+});
 
 app.get("/api/health", (_req, res) => {
   const ready = lobbyService?.isHealthy() ?? false;

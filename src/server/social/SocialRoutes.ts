@@ -1,4 +1,5 @@
 import { GAME_ID_REGEX } from "@openfront/engine-api/Schemas";
+import crypto from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 import { z } from "zod";
@@ -194,6 +195,60 @@ export function socialRouter(store: SocialStore): express.Router {
     handle((req, res) => {
       const gameId = z.string().regex(GAME_ID_REGEX).parse(req.params.gameId);
       store.closeLobby(gameId);
+      res.json({ ok: true });
+    }),
+  );
+
+  // --- admin: header "x-admin-key: <SOCIAL_ADMIN_KEY>" ---------------------
+  const adminKey = process.env.SOCIAL_ADMIN_KEY;
+  const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
+    const given = req.header("x-admin-key") ?? "";
+    // No key configured: admin endpoints stay off.
+    if (
+      !adminKey ||
+      given.length !== adminKey.length ||
+      !crypto.timingSafeEqual(Buffer.from(given), Buffer.from(adminKey))
+    ) {
+      res.status(403).json({ error: "forbidden" });
+      return;
+    }
+    next();
+  };
+  const AdminUserSchema = z.object({ username: z.string().trim().min(1) });
+
+  router.get(
+    "/admin/users",
+    authLimiter,
+    requireAdmin,
+    handle((_req, res) => res.json({ users: store.listUsers() })),
+  );
+  router.post(
+    "/admin/ban",
+    authLimiter,
+    requireAdmin,
+    handle((req, res) => {
+      store.setBanned(AdminUserSchema.parse(req.body).username, true);
+      res.json({ ok: true });
+    }),
+  );
+  router.post(
+    "/admin/unban",
+    authLimiter,
+    requireAdmin,
+    handle((req, res) => {
+      store.setBanned(AdminUserSchema.parse(req.body).username, false);
+      res.json({ ok: true });
+    }),
+  );
+  router.post(
+    "/admin/reset-password",
+    authLimiter,
+    requireAdmin,
+    handle((req, res) => {
+      const { username, password } = AdminUserSchema.extend({
+        password: z.string(),
+      }).parse(req.body);
+      store.resetPassword(username, password);
       res.json({ ok: true });
     }),
   );

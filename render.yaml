@@ -1,0 +1,57 @@
+# Render blueprint: Render builds and runs the game straight from your GitHub
+# repo and serves it over HTTPS. See HOSTING.md.
+services:
+  - type: web
+    name: openfront
+    runtime: node
+    # Building the client needs more than the free plan's 512 MB, and the
+    # disk below (which keeps accounts across deploys) needs a paid plan.
+    plan: starter
+    buildCommand: >-
+      npm install -g npm@12.1.0 &&
+      npm ci --ignore-scripts &&
+      npm run build-prod
+    startCommand: npm run start:server
+    healthCheckPath: /api/health
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: 24.15.0
+      - key: GAME_ENV
+        value: prod
+      # Run without OpenFront's closed-source API.
+      - key: EXTERNAL_API
+        value: "false"
+      # One port: the main server forwards to the game workers itself.
+      - key: PROXY_WORKERS
+        value: "true"
+      - key: NUM_WORKERS
+        value: "2"
+      - key: INSTANCE_LETTER
+        value: a
+      # Accounts, friends and ratings.
+      - key: SOCIAL_DATA_FILE
+        value: /var/data/social.json
+      # Your site's host name, e.g. yourgame.onrender.com
+      - key: DOMAIN
+        sync: false
+      # Link players get from the footer's GitHub icon (required by the AGPL).
+      - key: SOURCE_URL
+        sync: false
+      # Cloudflare's always-pass test key: no bot check. Put a real Turnstile
+      # site key here if you want one.
+      - key: TURNSTILE_SITE_KEY
+        value: 1x00000000000000000000AA
+      # Secrets: Render generates random values.
+      - key: API_KEY
+        generateValue: true
+      - key: ADMIN_BOT_API_KEY
+        generateValue: true
+      # Lets you ban players and reset passwords (see HOSTING.md).
+      - key: SOCIAL_ADMIN_KEY
+        generateValue: true
+      - key: GIT_COMMIT
+        value: render
