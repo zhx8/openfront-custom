@@ -40,7 +40,7 @@ services:
         sync: false
       # Link players get from the footer's GitHub icon (required by the AGPL).
       - key: SOURCE_URL
-        sync: false
+        value: https://github.com/zhx8/openfront-custom
       # Cloudflare's always-pass test key: no bot check. Put a real Turnstile
       # site key here if you want one.
       - key: TURNSTILE_SITE_KEY
