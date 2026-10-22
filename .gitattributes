@@ -27,3 +27,4 @@
 # text=auto keeps Git's binary detection, so maps, images and audio are still
 # left untouched; only files Git already treats as text are normalised.
 * text=auto eol=lf
+*.sh text eol=lf

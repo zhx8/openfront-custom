@@ -1,0 +1,18 @@
+{
+  // GitHub Codespaces: open the repo on github.com > Code > Codespaces >
+  // Create codespace. It installs, builds and starts the game, and makes it
+  // public at https://<codespace>-8080.app.github.dev (see start.sh).
+  "name": "OpenFront server",
+  "image": "mcr.microsoft.com/devcontainers/base:bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24.15.0" },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "hostRequirements": { "cpus": 2, "memory": "8gb" },
+  "forwardPorts": [8080],
+  "portsAttributes": {
+    "8080": { "label": "Game", "onAutoForward": "notify" }
+  },
+  "postCreateCommand": "bash .devcontainer/build.sh",
+  "postStartCommand": "bash .devcontainer/start.sh"
+}
