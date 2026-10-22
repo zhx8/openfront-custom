@@ -6,7 +6,9 @@
   "image": "mcr.microsoft.com/devcontainers/base:bookworm",
   "features": {
     "ghcr.io/devcontainers/features/node:1": { "version": "24.15.0" },
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    // Lets `gh codespace ssh` in, to read logs or restart the server.
+    "ghcr.io/devcontainers/features/sshd:1": {}
   },
   "hostRequirements": { "cpus": 2, "memory": "8gb" },
   "forwardPorts": [8080],

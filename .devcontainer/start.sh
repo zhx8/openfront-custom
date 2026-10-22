@@ -25,7 +25,9 @@ NUM_WORKERS=2 INSTANCE_LETTER=a DOMAIN=localhost \
 TURNSTILE_SITE_KEY=1x00000000000000000000AA GIT_COMMIT=codespace \
 SOURCE_URL=https://github.com/zhx8/openfront-custom \
 SOCIAL_DATA_FILE="$PWD/data/social.json" \
-nohup npm run start:server > data/server.log 2>&1 &
+# setsid: fully detached, so it outlives this startup script (Codespaces
+# ends the script's process group when it returns).
+setsid nohup npm run start:server > data/server.log 2>&1 < /dev/null &
 
 # Wait for the server, then open the port to everyone.
 for _ in $(seq 1 60); do
