@@ -18,19 +18,26 @@ set -a
 . data/secrets.env
 set +a
 
+export GAME_ENV=prod
+export EXTERNAL_API=false
+export PROXY_WORKERS=true
+export PORT=8080
+export NUM_WORKERS=2
+export INSTANCE_LETTER=a
+export DOMAIN=localhost
+export TURNSTILE_SITE_KEY=1x00000000000000000000AA
+export GIT_COMMIT=codespace
+export SOURCE_URL=https://github.com/zhx8/openfront-custom
+export SOCIAL_DATA_FILE="$PWD/data/social.json"
+
 pkill -f "src/server/Server.ts" 2>/dev/null || true
 
-GAME_ENV=prod EXTERNAL_API=false PROXY_WORKERS=true PORT=8080 \
-NUM_WORKERS=2 INSTANCE_LETTER=a DOMAIN=localhost \
-TURNSTILE_SITE_KEY=1x00000000000000000000AA GIT_COMMIT=codespace \
-SOURCE_URL=https://github.com/zhx8/openfront-custom \
-SOCIAL_DATA_FILE="$PWD/data/social.json" \
-# setsid: fully detached, so it outlives this startup script (Codespaces
-# ends the script's process group when it returns).
+# setsid: fully detached, so the server outlives this startup script
+# (Codespaces ends the script's process group when it returns).
 setsid nohup npm run start:server > data/server.log 2>&1 < /dev/null &
 
 # Wait for the server, then open the port to everyone.
-for _ in $(seq 1 60); do
+for _ in $(seq 1 90); do
   curl -sf http://localhost:8080/api/health > /dev/null && break
   sleep 2
 done
